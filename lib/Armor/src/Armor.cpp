@@ -2,8 +2,8 @@
 #include <Adafruit_NeoPixel.h>
 #include "Armor.h"
 
-template <int segmentCount>
-AddressableArea<segmentCount>::AddressableArea(uint16_t ledCount, uint8_t pin, int16_t segmentStarts[segmentCount], int16_t segmentEnds[segmentCount])
+template <uint8_t segmentCount>
+AddressableArea<segmentCount>::AddressableArea(uint16_t ledCount, uint8_t pin, int16_t segmentStarts[segmentCount], int16_t segmentEnds[segmentCount], uint8_t longestSegmentLength)
 {
   numLEDs = ledCount;
   pin = pin;
@@ -11,17 +11,26 @@ AddressableArea<segmentCount>::AddressableArea(uint16_t ledCount, uint8_t pin, i
   memcpy(segmentStartIndicies, segmentStarts, sizeof(segmentStarts[0]) * segmentCount);
   memcpy(segmentEndIndicies, segmentEnds, sizeof(segmentEnds[0]) * segmentCount);
   areaInstance = new Adafruit_NeoPixel(numLEDs, pin, NEO_GRB + NEO_KHZ800);
+  longestSegment = longestSegmentLength;
+};
+
+void Armor::setFullSection(Adafruit_NeoPixel *stripInstance, uint16_t numLEDs, uint32_t color)
+{
+  for (uint16_t i = 0; i < numLEDs; i++)
+  {
+    stripInstance->setPixelColor(i, color);
+  }
 };
 
 Armor::Armor()
 {
   int16_t chestLeftStarts[3] = {0, -14, 15};
   int16_t chestLeftEnds[3] = {-7, 8, -20};
-  chestLeft = new AddressableArea<3>(21, 6, chestLeftStarts, chestLeftEnds);
+  chestLeft = new AddressableArea<3>(21, 6, chestLeftStarts, chestLeftEnds, 8);
 
   int16_t chestRightStarts[2] = {0, 3};
   int16_t chestRightEnds[2] = {2, 6};
-  chestRight = new AddressableArea<2>(7, 5, chestRightStarts, chestRightEnds);
+  chestRight = new AddressableArea<2>(7, 5, chestRightStarts, chestRightEnds, 8);
 }
 
 void Armor::begin()
