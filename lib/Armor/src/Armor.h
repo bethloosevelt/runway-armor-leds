@@ -78,15 +78,15 @@ template <uint8_t segmentCount, uint8_t numColors>
 class Radiate
 {
 public:
-  Radiate(uint32_t colorCycles[numColors], int duration, boolean outward, boolean bounce, AddressableArea<segmentCount> *area)
+  Radiate(uint32_t colorCycles[numColors], int duration, boolean outward, boolean bounce, boolean loop, AddressableArea<segmentCount> *area)
       : lastFrameTime(millis()), frame(0), cycle(0), outward(outward), duration(duration), bounce(bounce), area(area)
   {
     memcpy(colors, colorCycles, sizeof(colorCycles[0]) * numColors);
-  }
+  };
   void advance()
   {
     int currentTime = millis();
-    if (currentTime - lastFrameTime >= duration / area->longestSegment)
+    if (currentTime - lastFrameTime >= duration / area->longestSegment && !paused)
     {
       lastFrameTime = currentTime;
       for (int i = 0; i < area->numSegments; i++)
@@ -102,6 +102,10 @@ public:
         {
           outward = !outward;
         }
+        if (!loop)
+        {
+          paused = true;
+        }
       }
       else
       {
@@ -109,9 +113,26 @@ public:
       }
     }
   };
+  void changeColors(uint32_t colorCycles[numColors])
+  {
+    memcpy(colors, colorCycles, sizeof(colorCycles[0]) * numColors);
+  }
+  void reset(int duration, boolean outward, boolean bounce, boolean loop)
+  {
+    Armor::setFullSection(area->areaInstance, area->numLEDs, area->areaInstance->Color(0, 0, 0));
+    this->duration = duration;
+    this->outward = outward;
+    this->bounce = bounce;
+    this->loop = loop;
+    this->cycle = 0;
+    this->frame = 0;
+    this->lastFrameTime = millis();
+  }
   int duration;
   boolean outward;
   boolean bounce;
+  boolean loop;
+  boolean paused;
 
 private:
   AddressableArea<segmentCount> *area;
@@ -158,7 +179,9 @@ public:
     this->frameDuration = duration / (maxBrightness - minBrightness);
     this->brightness = minBrightness;
     this->rising = true;
+    lastFrameTime = millis();
   }
+
   Armor *armor;
   int duration;
   int lastFrameTime;

@@ -29,8 +29,8 @@ Armor::Armor()
   chestLeft = new AddressableArea<3>(21, 6, chestLeftStarts, chestLeftEnds, 8);
 
   int16_t chestRightStarts[2] = {0, 3};
-  int16_t chestRightEnds[2] = {2, 6};
-  chestRight = new AddressableArea<2>(7, 5, chestRightStarts, chestRightEnds, 8);
+  int16_t chestRightEnds[2] = {2, 7};
+  chestRight = new AddressableArea<2>(8, 5, chestRightStarts, chestRightEnds, 5);
 }
 
 void Armor::begin()
