@@ -120,4 +120,52 @@ private:
   int cycle;
   uint32_t colors[numColors];
 };
+
+class GlobalBreathe
+{
+public:
+  GlobalBreathe(Armor *armor, int duration, uint16_t minBrightness, uint16_t maxBrightness) : armor(armor), duration(duration), lastFrameTime(millis()), frameDuration(duration / (maxBrightness - minBrightness)), maxBrightness(maxBrightness), minBrightness(minBrightness), brightness(minBrightness), rising(true) {}
+  void advance()
+  {
+    int currentTime = millis();
+    if (currentTime - lastFrameTime >= frameDuration)
+    {
+      lastFrameTime = currentTime;
+      armor->setBrightness(brightness);
+      if (rising)
+      {
+        brightness++;
+      }
+      else
+      {
+        brightness--;
+      }
+      if (brightness == maxBrightness)
+      {
+        rising = false;
+      }
+      if (brightness == minBrightness)
+      {
+        rising = true;
+      }
+    }
+  }
+  void reset(int duration, uint16_t minBrightness, uint16_t maxBrightness)
+  {
+    this->duration = duration;
+    this->maxBrightness = maxBrightness;
+    this->minBrightness = minBrightness;
+    this->frameDuration = duration / (maxBrightness - minBrightness);
+    this->brightness = minBrightness;
+    this->rising = true;
+  }
+  Armor *armor;
+  int duration;
+  int lastFrameTime;
+  int frameDuration;
+  uint16_t maxBrightness;
+  uint16_t minBrightness;
+  uint16_t brightness;
+  boolean rising;
+};
 #endif

@@ -8,49 +8,23 @@ uint32_t orange = armor->chestLeft->areaInstance->Color(255, 95, 31);
 uint32_t blue = armor->chestLeft->areaInstance->Color(0, 50, 255);
 
 uint32_t basePalette[3] = {yellow, orange, blue};
+uint16_t initialBrightness = 1;
 
 int startTime = millis();
+
+// initialize animators
 Cycle<CHEST_RIGHT_SEGMENTS, 3> *cycleChestRight = new Cycle<CHEST_RIGHT_SEGMENTS, 3>(armor->chestRight, 200, basePalette);
 Radiate<CHEST_LEFT_SEGMENTS, 3> *radiateChestLeft = new Radiate<CHEST_LEFT_SEGMENTS, 3>(basePalette, 400, true, true, armor->chestLeft);
+GlobalBreathe *globalBreathe = new GlobalBreathe(armor, 400, initialBrightness, 30);
 
 void setup()
 {
   pinMode(5, OUTPUT);
   pinMode(6, OUTPUT);
-  Serial.begin(9600);
   armor->begin();
-  armor->setBrightness(10);
   armor->setAllOneColor(blue);
+  armor->setBrightness(initialBrightness);
   armor->show();
-}
-
-boolean rising = true;
-uint8_t brightness = 1;
-int lastGlobalBreatheFrameTime = millis();
-void globalBreathe(int throttle)
-{
-  int currentTime = millis();
-  if (currentTime - lastGlobalBreatheFrameTime >= throttle)
-  {
-    lastGlobalBreatheFrameTime = currentTime;
-    armor->setBrightness(brightness);
-    if (rising)
-    {
-      brightness++;
-    }
-    else
-    {
-      brightness--;
-    }
-    if (brightness == 10)
-    {
-      rising = false;
-    }
-    if (brightness == 3)
-    {
-      rising = true;
-    }
-  }
 }
 
 boolean isFirstPhaseOneCycle = true;
@@ -66,7 +40,7 @@ void phaseOne()
   }
   cycleChestRight->advance();
   radiateChestLeft->advance();
-  globalBreathe(30);
+  globalBreathe->advance();
 }
 
 boolean isFirstPhaseTwoCycle = true;
@@ -83,7 +57,7 @@ void phaseTwo()
   }
   cycleChestRight->advance();
   radiateChestLeft->advance();
-  // globalBreathe(10);
+  globalBreathe->advance();
 }
 
 int phaseOneLengh = 7000;
