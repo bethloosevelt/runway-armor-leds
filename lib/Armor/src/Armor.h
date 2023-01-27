@@ -131,7 +131,7 @@ template <uint8_t segmentCount>
 class Radiate
 {
 public:
-  Radiate(int duration, int holdDuration, int delayDuration, AddressableArea<segmentCount> *area, int currentTime, PaletteKey paletteKey, Colors *colors) : duration(duration), holdDuration(holdDuration), delayDuration(delayDuration), paused(delayDuration > 0), area(area), pauseDuration(delayDuration), lastFrameTime(currentTime), frame(0), palette(colors->getPalette(paletteKey)), paletteLength(colors->getPaletteLength(paletteKey)), cycle(0) {}
+  Radiate(int duration, int holdDuration, int delayDuration, AddressableArea<segmentCount> *area, int currentTime, PaletteKey paletteKey, Colors *colors) : duration(duration), holdDuration(holdDuration), delayDuration(delayDuration), paused(delayDuration > 0), area(area), pauseDuration(delayDuration), lastFrameTime(currentTime), frame(0), palette(colors->getPalette(paletteKey)), paletteLength(colors->getPaletteLength(paletteKey)), cycle(0), isHolding(false), cycleTime(0), colors(colors) {}
   void advance(int currentTime)
   {
     int timeSinceLastUpdate = currentTime - lastFrameTime;
@@ -142,7 +142,12 @@ public:
     }
     else if (paused && timeSinceLastUpdate >= pauseDuration)
     {
-      paused = false;
+      if (!isHolding)
+      {
+        paused = false;
+        Armor::setFullSection(area->areaInstance, area->numLEDs, colors->black);
+      }
+      isHolding = false;
       pauseDuration = delayDuration;
       lastFrameTime = currentTime;
       return;
@@ -157,15 +162,19 @@ public:
       }
       frame++;
     }
-    if (((area->longestSegment - frame) <= 1) && ((timeSinceLastUpdate - timePerUpdate) < 1))
+    cycleTime++;
+    if (cycleTime == duration)
     {
       cycle++;
+      cycleTime = 0;
       lastFrameTime = currentTime;
       frame = 0;
       pauseDuration = holdDuration;
       paused = true;
+      isHolding = true;
     }
   }
+  Colors *colors;
   int duration;
   int holdDuration;
   int delayDuration;
@@ -177,6 +186,8 @@ public:
   int32_t *palette;
   int paletteLength;
   int cycle;
+  boolean isHolding;
+  int cycleTime;
 };
 
 class GlobalBreathe

@@ -8,8 +8,8 @@ uint16_t initialBrightness = 3;
 
 // initialize animators
 Cycle<CHEST_RIGHT_SEGMENTS> *cycleChestRight = new Cycle<CHEST_RIGHT_SEGMENTS>(armor->chestRight, 200, PaletteKey::base, colors);
-Radiate<CHEST_LEFT_SEGMENTS> *radiateChestLeft = new Radiate<CHEST_LEFT_SEGMENTS>(400, 4, 0, armor->chestLeft, 0, PaletteKey::base, colors);
-Radiate<CHEST_RIGHT_SEGMENTS> *radiateChestRight = new Radiate<CHEST_RIGHT_SEGMENTS>(400, 0, 4, armor->chestRight, 0, PaletteKey::base, colors);
+Radiate<CHEST_LEFT_SEGMENTS> *radiateChestLeft = new Radiate<CHEST_LEFT_SEGMENTS>(100, 100, 0, armor->chestLeft, 0, PaletteKey::base, colors);
+Radiate<CHEST_RIGHT_SEGMENTS> *radiateChestRight = new Radiate<CHEST_RIGHT_SEGMENTS>(100, 0, 100, armor->chestRight, 0, PaletteKey::base, colors);
 GlobalBreathe *globalBreathe = new GlobalBreathe(armor, 400, initialBrightness, 4);
 
 void setup()
