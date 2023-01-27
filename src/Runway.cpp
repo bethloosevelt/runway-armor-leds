@@ -8,8 +8,8 @@ uint16_t initialBrightness = 3;
 
 // initialize animators
 Cycle<CHEST_RIGHT_SEGMENTS> *cycleChestRight = new Cycle<CHEST_RIGHT_SEGMENTS>(armor->chestRight, 200, PaletteKey::base, colors);
-Radiate<CHEST_LEFT_SEGMENTS> *radiateChestLeft = new Radiate<CHEST_LEFT_SEGMENTS>(400, true, false, false, armor->chestLeft, PaletteKey::base, 0, colors, 400);
-Radiate<CHEST_RIGHT_SEGMENTS> *radiateChestRight = new Radiate<CHEST_RIGHT_SEGMENTS>(400, true, false, false, armor->chestRight, PaletteKey::base, 400, colors, 400);
+Radiate<CHEST_LEFT_SEGMENTS> *radiateChestLeft = new Radiate<CHEST_LEFT_SEGMENTS>(400, 4, 0, armor->chestLeft, 0, PaletteKey::base, colors);
+Radiate<CHEST_RIGHT_SEGMENTS> *radiateChestRight = new Radiate<CHEST_RIGHT_SEGMENTS>(400, 0, 4, armor->chestRight, 0, PaletteKey::base, colors);
 GlobalBreathe *globalBreathe = new GlobalBreathe(armor, 400, initialBrightness, 4);
 
 void setup()
@@ -26,12 +26,12 @@ void setup()
 boolean isFirstPhaseOneCycle = true;
 void phaseOne(int runtime)
 {
-  if (isFirstPhaseOneCycle)
-  {
-    isFirstPhaseOneCycle = false;
-    radiateChestLeft->reset(300, true, false, true, 0, 300, runtime);
-    radiateChestRight->reset(300, true, false, true, 0, 300, runtime);
-  }
+  // if (isFirstPhaseOneCycle)
+  // {
+  //   isFirstPhaseOneCycle = false;
+  //   radiateChestLeft->reset(300, true, false, true, 0, 300, runtime);
+  //   radiateChestRight->reset(300, true, false, true, 0, 300, runtime);
+  // }
   radiateChestRight->advance(runtime);
   radiateChestLeft->advance(runtime);
   // globalBreathe->advance();
@@ -40,14 +40,14 @@ void phaseOne(int runtime)
 boolean isFirstPhaseTwoCycle = true;
 void phaseTwo(int runtime)
 {
-  if (isFirstPhaseTwoCycle)
-  {
-    isFirstPhaseTwoCycle = false;
-    radiateChestLeft->reset(30, false, false, true, 0, 0, runtime);
-    radiateChestRight->reset(30, false, false, true, 0, 0, runtime);
-    return;
-    // globalBreathe->reset(100, 3, 4);
-  }
+  // if (isFirstPhaseTwoCycle)
+  // {
+  //   isFirstPhaseTwoCycle = false;
+  //   radiateChestLeft->reset(30, false, false, true, 0, 0, runtime);
+  //   radiateChestRight->reset(30, false, false, true, 0, 0, runtime);
+  //   return;
+  //   // globalBreathe->reset(100, 3, 4);
+  // }
   radiateChestRight->advance(runtime);
   radiateChestLeft->advance(runtime);
   // globalBreathe->advance();

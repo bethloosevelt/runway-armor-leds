@@ -131,85 +131,51 @@ template <uint8_t segmentCount>
 class Radiate
 {
 public:
-  Radiate(int duration, boolean outward, boolean bounce, boolean loop, AddressableArea<segmentCount> *area, PaletteKey paletteKey, int delayDuration, Colors *colors, int hold)
-      : lastFrameTime(0), frame(0), cycle(0), outward(outward), duration(duration), bounce(bounce), area(area), paletteLength(colors->getPaletteLength(paletteKey)), palette(colors->getPalette(paletteKey)), delayDuration(delayDuration), colors(colors), hold(hold), paused(true), pauseDuration(delayDuration){};
+  Radiate(int duration, int holdDuration, int delayDuration, AddressableArea<segmentCount> *area, int currentTime, PaletteKey paletteKey, Colors *colors) : duration(duration), holdDuration(holdDuration), delayDuration(delayDuration), paused(delayDuration > 0), area(area), pauseDuration(delayDuration), lastFrameTime(currentTime), frame(0), palette(colors->getPalette(paletteKey)), paletteLength(colors->getPaletteLength(paletteKey)), cycle(0) {}
   void advance(int currentTime)
   {
-    if (paused && !(currentTime - lastFrameTime < pauseDuration))
+    int timeSinceLastUpdate = currentTime - lastFrameTime;
+    int timePerUpdate = floor(duration / area->longestSegment);
+    if (paused && timeSinceLastUpdate < pauseDuration)
     {
       return;
     }
-    else if (paused)
+    else if (paused && timeSinceLastUpdate >= pauseDuration)
     {
-      lastFrameTime = currentTime;
       paused = false;
       pauseDuration = delayDuration;
-      Armor::setFullSection(area->areaInstance, area->numLEDs, colors->black);
+      lastFrameTime = currentTime;
       return;
     }
-    if (currentTime - lastFrameTime == floor(delayDuration / area->longestSegment))
+    if (timeSinceLastUpdate >= timePerUpdate || frame == 0)
     {
       lastFrameTime = currentTime;
       for (int i = 0; i < area->numSegments; i++)
       {
-        int pixelIndex = abs((outward ? area->segmentStartIndicies[i] : area->segmentEndIndicies[i]) + frame);
+        int pixelIndex = abs((true ? area->segmentStartIndicies[i] : area->segmentEndIndicies[i]) + frame);
         area->areaInstance->setPixelColor(pixelIndex, this->palette[cycle % this->paletteLength]);
       }
       frame++;
     }
-    if (currentTime - lastFrameTime == duration)
+    if (((area->longestSegment - frame) <= 1) && ((timeSinceLastUpdate - timePerUpdate) < 1))
     {
+      cycle++;
       lastFrameTime = currentTime;
       frame = 0;
-      cycle++;
-      pauseDuration = this->hold;
+      pauseDuration = holdDuration;
       paused = true;
-      if (bounce)
-      {
-        outward = !outward;
-      }
     }
-  };
-  void pause()
-  {
-    this->paused = true;
   }
-  void reset(int duration, boolean outward, boolean bounce, boolean loop, int delay, int hold, int currentTime)
-  {
-    Armor::setFullSection(area->areaInstance, area->numLEDs, this->colors->black);
-    this->duration = duration;
-    this->outward = outward;
-    this->bounce = bounce;
-    this->loop = loop;
-    this->hold = hold;
-    this->cycle = 0;
-    this->frame = 0;
-    this->lastFrameTime = currentTime;
-    this->delay = delay;
-    this->paused = false;
-  }
-  void setPalette(PaletteKey paletteKey)
-  {
-    this->palette = this->colors->getPalette(paletteKey);
-    this->palette = this->colors->getPaletteLength(paletteKey);
-  }
-  int delayDuration;
   int duration;
-  uint32_t *palette;
-  uint8_t paletteLength;
-  boolean outward;
-  boolean bounce;
-  boolean loop;
+  int holdDuration;
+  int delayDuration;
   boolean paused;
-  Colors *colors;
-  int delay;
-  int hold;
-  int pauseDuration;
-
-private:
   AddressableArea<segmentCount> *area;
-  uint8_t frame;
+  int pauseDuration;
   int lastFrameTime;
+  int frame;
+  int32_t *palette;
+  int paletteLength;
   int cycle;
 };
 
