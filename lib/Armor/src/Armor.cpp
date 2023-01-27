@@ -24,9 +24,9 @@ void Armor::setFullSection(Adafruit_NeoPixel *stripInstance, uint16_t numLEDs, u
 
 Armor::Armor()
 {
-  int16_t chestLeftStarts[3] = {0, -14, 15};
-  int16_t chestLeftEnds[3] = {-7, 8, -20};
-  chestLeft = new AddressableArea<3>(21, 6, chestLeftStarts, chestLeftEnds, 8);
+  int16_t chestTopStarts[6] = {0, -15, 16, 24, -39, 40};
+  int16_t chestTopEnds[6] = {-7, 8, -23, -31, 32, -47};
+  chestTop = new AddressableArea<CHEST_TOP_SEGMENTS>(48, 6, chestTopStarts, chestTopEnds, 8);
 
   int16_t chestRightStarts[2] = {0, 3};
   int16_t chestRightEnds[2] = {-2, -7};
@@ -35,18 +35,18 @@ Armor::Armor()
 
 void Armor::begin()
 {
-  chestLeft->areaInstance->begin();
+  chestTop->areaInstance->begin();
   chestRight->areaInstance->begin();
 }
 
 void Armor::show()
 {
-  chestLeft->areaInstance->show();
+  chestTop->areaInstance->show();
   chestRight->areaInstance->show();
 }
 
 void Armor::setBrightness(uint8_t brightness)
 {
-  chestLeft->areaInstance->setBrightness(brightness);
+  chestTop->areaInstance->setBrightness(brightness);
   chestRight->areaInstance->setBrightness(brightness);
 }

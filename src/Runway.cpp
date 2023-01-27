@@ -4,13 +4,12 @@
 
 Armor *armor = new Armor();
 Colors *colors = new Colors();
-uint16_t initialBrightness = 3;
+uint16_t initialBrightness = 6;
 
 // initialize animators
-Cycle<CHEST_RIGHT_SEGMENTS> *cycleChestRight = new Cycle<CHEST_RIGHT_SEGMENTS>(armor->chestRight, 200, PaletteKey::base, colors);
-Radiate<CHEST_LEFT_SEGMENTS> *radiateChestLeft = new Radiate<CHEST_LEFT_SEGMENTS>(20, 20, 0, armor->chestLeft, 0, PaletteKey::base, colors);
-Radiate<CHEST_RIGHT_SEGMENTS> *radiateChestRight = new Radiate<CHEST_RIGHT_SEGMENTS>(20, 0, 20, armor->chestRight, 0, PaletteKey::base, colors);
-GlobalBreathe *globalBreathe = new GlobalBreathe(armor, 400, initialBrightness, 4);
+Radiate<CHEST_TOP_SEGMENTS> *radiatechestTop = new Radiate<CHEST_TOP_SEGMENTS>(100, 200, 0, armor->chestTop, 0, PaletteKey::base, colors);
+Radiate<CHEST_RIGHT_SEGMENTS> *radiateChestRight = new Radiate<CHEST_RIGHT_SEGMENTS>(100, 0, 100, armor->chestRight, 0, PaletteKey::base, colors);
+GlobalBreathe *globalBreathe = new GlobalBreathe(armor, 150, initialBrightness, 30);
 
 void setup()
 {
@@ -23,56 +22,64 @@ void setup()
   armor->show();
 }
 
-boolean isFirstPhaseOneCycle = true;
-void phaseOne(int runtime)
+boolean firstPhaseOneRun = true;
+void phaseOne(uint64_t runtime)
 {
-  // if (isFirstPhaseOneCycle)
-  // {
-  //   isFirstPhaseOneCycle = false;
-  //   radiateChestLeft->reset(300, true, false, true, 0, 300, runtime);
-  //   radiateChestRight->reset(300, true, false, true, 0, 300, runtime);
-  // }
+  if (firstPhaseOneRun)
+  {
+    firstPhaseOneRun = false;
+    radiatechestTop->changeTimings(100, 200, 0, runtime);
+    radiateChestRight->changeTimings(100, 0, 100, runtime);
+  }
   radiateChestRight->advance(runtime);
-  radiateChestLeft->advance(runtime);
-  // globalBreathe->advance();
+  radiatechestTop->advance(runtime);
 }
 
-boolean isFirstPhaseTwoCycle = true;
-void phaseTwo(int runtime)
+boolean secondPhaseFirstRun = true;
+void phaseTwo(uint64_t runtime)
 {
-  // if (isFirstPhaseTwoCycle)
-  // {
-  //   isFirstPhaseTwoCycle = false;
-  //   radiateChestLeft->reset(30, false, false, true, 0, 0, runtime);
-  //   radiateChestRight->reset(30, false, false, true, 0, 0, runtime);
-  //   return;
-  //   // globalBreathe->reset(100, 3, 4);
-  // }
+  if (secondPhaseFirstRun)
+  {
+    secondPhaseFirstRun = false;
+    radiatechestTop->changeTimings(50, 100, 0, runtime);
+    radiateChestRight->changeTimings(50, 0, 50, runtime);
+  }
   radiateChestRight->advance(runtime);
-  radiateChestLeft->advance(runtime);
-  // globalBreathe->advance();
+  radiatechestTop->advance(runtime);
 }
 
-int phaseOneLengh = 20000;
-int phaseTwoLengh = 3000;
+boolean thirdPhaseFirstRun = true;
+void phaseThree(uint64_t runtime)
+{
+  if (thirdPhaseFirstRun)
+  {
+    thirdPhaseFirstRun = false;
+    radiatechestTop->changeTimings(25, 50, 0, runtime);
+    radiateChestRight->changeTimings(25, 0, 25, runtime);
+  }
+  radiateChestRight->advance(runtime);
+  radiatechestTop->advance(runtime);
+}
+
+uint64_t phaseOneDuration = 1000;
+uint64_t phaseTwoDuration = 1000;
 boolean finished = false;
-int runtime = 0;
+uint64_t runtime = 0;
 void loop()
 {
-  if (runtime < phaseOneLengh && !finished)
+  if (runtime < phaseOneDuration)
   {
     phaseOne(runtime);
   }
-  else if (runtime < phaseOneLengh + phaseTwoLengh && !finished)
+  if (runtime < phaseTwoDuration + phaseOneDuration && runtime > phaseOneDuration)
   {
     phaseTwo(runtime);
   }
-  else if (runtime > phaseOneLengh + phaseTwoLengh)
+  if (runtime > phaseTwoDuration + phaseOneDuration)
   {
-    finished = true;
-    armor->setBrightness(0);
+    phaseThree(runtime);
   }
-  delay(10);
+  delay(3);
   armor->show();
   runtime++;
 }

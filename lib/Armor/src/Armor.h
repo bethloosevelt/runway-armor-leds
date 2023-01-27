@@ -12,23 +12,26 @@ enum class PaletteKey
 class Colors
 {
 public:
-  uint32_t yellow;
   uint32_t orange;
-  uint32_t blue;
+  uint32_t yellow;
+  uint32_t green;
+  uint32_t pink;
   uint32_t black;
-  uint32_t basePalette[3];
+  uint32_t basePalette[4];
   uint32_t blankPalette[1];
   Colors()
   {
-    yellow = Adafruit_NeoPixel::Color(250, 237, 39);
-    orange = Adafruit_NeoPixel::Color(255, 95, 31);
-    blue = Adafruit_NeoPixel::Color(0, 50, 255);
+    // orange yellow green pink
+    orange = Adafruit_NeoPixel::Color(200, 50, 0);
+    yellow = Adafruit_NeoPixel::Color(253, 248, 0);
+    green = Adafruit_NeoPixel::Color(69, 247, 255);
+    pink = Adafruit_NeoPixel::Color(255, 0, 146);
     black = Adafruit_NeoPixel::Color(0, 0, 0);
 
-    int32_t baseColors[3] = {orange, blue, yellow};
-    memcpy(basePalette, baseColors, sizeof(baseColors[0]) * 3);
+    int32_t baseColors[4] = {orange, yellow, green, pink};
+    memcpy(basePalette, baseColors, sizeof(baseColors[0]) * 4);
     int32_t blankColors[1] = {black};
-    memcpy(blankPalette, blankColors, sizeof(blankColors[0]) * 3);
+    memcpy(blankPalette, blankColors, sizeof(blankColors[0]) * 1);
   }
 
   uint32_t *getPalette(PaletteKey paletteKey)
@@ -48,7 +51,7 @@ public:
     switch (paletteKey)
     {
     case PaletteKey::base:
-      return 3;
+      return 4;
     default:
       return 1;
       break;
@@ -70,7 +73,7 @@ public:
   Adafruit_NeoPixel *areaInstance;
 };
 
-const uint8_t CHEST_LEFT_SEGMENTS = 3;
+const uint8_t CHEST_TOP_SEGMENTS = 6;
 const uint8_t CHEST_RIGHT_SEGMENTS = 2;
 class Armor
 {
@@ -82,96 +85,80 @@ public:
   void show();
   void setAllOneColor(uint32_t color)
   {
-    setFullSection(chestLeft->areaInstance, chestLeft->numLEDs, color);
+    setFullSection(chestTop->areaInstance, chestTop->numLEDs, color);
     setFullSection(chestRight->areaInstance, chestRight->numLEDs, color);
   }
 
   /* sections */
   /* chest */
-  AddressableArea<CHEST_LEFT_SEGMENTS> *chestLeft;
+  AddressableArea<CHEST_TOP_SEGMENTS> *chestTop;
   AddressableArea<CHEST_RIGHT_SEGMENTS> *chestRight;
-};
-
-template <uint8_t numSegments>
-class Cycle
-{
-public:
-  Cycle(AddressableArea<numSegments> *area, int duration, PaletteKey paletteKey, Colors *colors) : area(area), duration(duration), cycle(0), lastCycleTime(millis()), palette(colors->getPalette(paletteKey)), paletteLength(colors->getPaletteLength(paletteKey)), colors(colors) {}
-  void advance()
-  {
-    int currentTime = millis();
-    if (currentTime - lastCycleTime >= duration / this->paletteLength)
-    {
-      lastCycleTime = currentTime;
-      Armor::setFullSection(area->areaInstance, area->numLEDs, this->palette[cycle % this->paletteLength]);
-      cycle++;
-    }
-  };
-  void reset(int duration)
-  {
-    cycle = 0;
-    lastCycleTime = millis();
-    this->duration = duration;
-  };
-  void setPalette(PaletteKey paletteKey)
-  {
-    this->palette = colors->getPalette(paletteKey);
-    this->palette = colors->getPaletteLength(paletteKey);
-  }
-  AddressableArea<numSegments> *area;
-  uint32_t *palette;
-  uint8_t paletteLength;
-  int duration;
-  int cycle;
-  int lastCycleTime;
-  Colors *colors;
 };
 
 template <uint8_t segmentCount>
 class Radiate
 {
 public:
-  Radiate(int duration, int holdDuration, int delayDuration, AddressableArea<segmentCount> *area, int currentTime, PaletteKey paletteKey, Colors *colors) : duration(duration), holdDuration(holdDuration), delayDuration(delayDuration), paused(delayDuration > 0), area(area), pauseDuration(delayDuration), lastFrameTime(currentTime), frame(0), palette(colors->getPalette(paletteKey)), paletteLength(colors->getPaletteLength(paletteKey)), cycle(0), isHolding(false), cycleTime(0), colors(colors) {}
-  void advance(int currentTime)
+  Radiate(int duration, int holdDuration, int delayDuration, AddressableArea<segmentCount> *area, uint64_t currentTime, PaletteKey paletteKey, Colors *colors) : duration(duration), holdDuration(holdDuration), delayDuration(delayDuration), paused(delayDuration > 0), area(area), lastFrameTime(currentTime), frame(0), palette(colors->getPalette(paletteKey)), paletteLength(colors->getPaletteLength(paletteKey)), cycle(0), isHolding(false), cycleTime(0), colors(colors), reverse(false) {}
+  void changeTimings(int duration, int holdDuration, int delayDuration, uint64_t currentTime)
+  {
+    this->duration = duration;
+    this->holdDuration = holdDuration;
+    this->delayDuration = delayDuration;
+    this->lastFrameTime = currentTime;
+    this->frame = 0;
+    this->cycle = 0;
+    this->paused = delayDuration > 0;
+    this->reverse = false;
+    this->isHolding = false;
+    this->cycleTime = 0;
+    Armor::setFullSection(area->areaInstance, area->numLEDs, colors->black);
+  };
+  void advance(uint64_t currentTime)
   {
     int timeSinceLastUpdate = currentTime - lastFrameTime;
     int timePerUpdate = floor(duration / area->longestSegment);
-    if (paused && timeSinceLastUpdate < pauseDuration)
+    if (!reverse && paused && timeSinceLastUpdate < delayDuration)
     {
       return;
     }
-    else if (paused && timeSinceLastUpdate >= pauseDuration)
+    if (reverse && paused && timeSinceLastUpdate < holdDuration)
     {
-      if (!isHolding)
-      {
-        paused = false;
-        Armor::setFullSection(area->areaInstance, area->numLEDs, colors->black);
-      }
-      isHolding = false;
-      pauseDuration = delayDuration;
-      lastFrameTime = currentTime;
       return;
+    }
+    if (paused)
+    {
+      isHolding = false;
+      paused = false;
+      lastFrameTime = currentTime;
     }
     if (timeSinceLastUpdate >= timePerUpdate || frame == 0)
     {
       lastFrameTime = currentTime;
       for (int i = 0; i < area->numSegments; i++)
       {
-        int pixelIndex = abs((true ? area->segmentStartIndicies[i] : area->segmentEndIndicies[i]) + frame);
-        area->areaInstance->setPixelColor(pixelIndex, this->palette[cycle % this->paletteLength]);
+        int pixelIndex = abs((!reverse ? area->segmentStartIndicies[i] : area->segmentEndIndicies[i]) + frame);
+        area->areaInstance->setPixelColor(pixelIndex, !reverse ? this->palette[cycle % this->paletteLength] : colors->black);
       }
       frame++;
     }
     cycleTime++;
     if (cycleTime == duration)
     {
-      cycle++;
+      if (reverse)
+      {
+        cycle++;
+        if (cycle == 1)
+        {
+          delayDuration = delayDuration * 2;
+        }
+      }
       cycleTime = 0;
       lastFrameTime = currentTime;
       frame = 0;
-      pauseDuration = holdDuration;
       paused = true;
       isHolding = true;
+      reverse = !reverse;
     }
   }
   Colors *colors;
@@ -180,20 +167,20 @@ public:
   int delayDuration;
   boolean paused;
   AddressableArea<segmentCount> *area;
-  int pauseDuration;
-  int lastFrameTime;
+  uint64_t lastFrameTime;
   int frame;
   int32_t *palette;
   int paletteLength;
   int cycle;
   boolean isHolding;
   int cycleTime;
+  boolean reverse;
 };
 
 class GlobalBreathe
 {
 public:
-  GlobalBreathe(Armor *armor, int duration, uint16_t minBrightness, uint16_t maxBrightness) : armor(armor), duration(duration), lastFrameTime(millis()), frameDuration(duration / (maxBrightness - minBrightness)), maxBrightness(maxBrightness), minBrightness(minBrightness), brightness(minBrightness), rising(true) {}
+  GlobalBreathe(Armor *armor, int duration, uint16_t minBrightness, uint16_t maxBrightness) : armor(armor), duration(duration), lastFrameTime(0), frameDuration(floor(duration / (maxBrightness - minBrightness))), maxBrightness(maxBrightness), minBrightness(minBrightness), brightness(minBrightness), rising(true) {}
   void advance(int currentTime)
   {
     if (currentTime - lastFrameTime == frameDuration)
@@ -233,6 +220,7 @@ public:
   int duration;
   int lastFrameTime;
   int frameDuration;
+  int cycleDuration;
   uint16_t maxBrightness;
   uint16_t minBrightness;
   uint16_t brightness;
