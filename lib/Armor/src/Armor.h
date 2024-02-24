@@ -2,6 +2,9 @@
 #define Armor_h
 #include "Arduino.h"
 #include <Adafruit_NeoPixel.h>
+#include <MemoryFree.h>
+
+#define controller 1
 
 enum class PaletteKey
 {
@@ -73,8 +76,15 @@ public:
   Adafruit_NeoPixel *areaInstance;
 };
 
+const uint8_t HEAD_SEGMENTS = 2;
+const uint8_t SHOULDER_SEGMENTS = 5;
 const uint8_t CHEST_TOP_SEGMENTS = 6;
-const uint8_t CHEST_RIGHT_SEGMENTS = 2;
+const uint8_t ABS_SEGMENTS = 6;
+const uint8_t ARM_SEGMENTS = 3;
+const uint8_t GROIN_RAYS_SEGMENTS = 8;
+const uint8_t SPIRAL_SEGMENTS = 1;
+const uint8_t THIGH_SEGMENTS = 6;
+const uint8_t LEG_SEGMENTS = 4;
 class Armor
 {
 public:
@@ -85,14 +95,53 @@ public:
   void show();
   void setAllOneColor(uint32_t color)
   {
+#if controller == 1
+    setFullSection(shoulders->areaInstance, shoulders->numLEDs, color);
+    setFullSection(arms->areaInstance, arms->numLEDs, color);
+    setFullSection(legs->areaInstance, legs->numLEDs, color);
+#endif
+#if controller == 2
     setFullSection(chestTop->areaInstance, chestTop->numLEDs, color);
-    setFullSection(chestRight->areaInstance, chestRight->numLEDs, color);
+    setFullSection(abs->areaInstance, abs->numLEDs, color);
+    setFullSection(head->areaInstance, head->numLEDs, color);
+    setFullSection(spiral->areaInstance, spiral->numLEDs, color);
+    setFullSection(groinRays->areaInstance, groinRays->numLEDs, color);
+#endif
   }
 
-  /* sections */
-  /* chest */
+// SHOULDERS controller 1
+#if controller == 1
+
+  AddressableArea<SHOULDER_SEGMENTS> *shoulders;
+  const int8_t shoulderOnePin = 3;
+
+  AddressableArea<ARM_SEGMENTS> *arms;
+  const int8_t armsPin = 5;
+
+  AddressableArea<THIGH_SEGMENTS> *thighs;
+  const int8_t thighsPin = 6;
+
+  AddressableArea<LEG_SEGMENTS> *legs;
+  const int8_t legsPin = 9;
+#endif
+#if controller == 2
+  // controller 2
+  AddressableArea<SPIRAL_SEGMENTS> *spiral;
+  const int8_t spiralPin = 3;
+
+  AddressableArea<HEAD_SEGMENTS> *head;
+  const int8_t headPin = 5;
+
   AddressableArea<CHEST_TOP_SEGMENTS> *chestTop;
-  AddressableArea<CHEST_RIGHT_SEGMENTS> *chestRight;
+  const int8_t chestTopPin = 6;
+
+  AddressableArea<ABS_SEGMENTS> *abs;
+  const int8_t absPin = 9;
+
+  AddressableArea<GROIN_RAYS_SEGMENTS> *groinRays;
+  const int8_t groinRaysPin = 10;
+
+#endif
 };
 
 template <uint8_t segmentCount>
@@ -137,7 +186,10 @@ public:
       lastFrameTime = currentTime;
       for (int i = 0; i < area->numSegments; i++)
       {
-        int pixelIndex = abs((!reverse ? area->segmentStartIndicies[i] : area->segmentEndIndicies[i]) + frame);
+        int startIndex = area->segmentStartIndicies[i];
+        int endIndex = area->segmentEndIndicies[i];
+        int segLength = abs(abs(max(startIndex, endIndex)) - abs(min(startIndex, endIndex)));
+        int pixelIndex = abs((!reverse ? area->segmentStartIndicies[i] : area->segmentEndIndicies[i]) + (frame % (segLength + 1)));
         area->areaInstance->setPixelColor(pixelIndex, !reverse ? this->palette[cycle % this->paletteLength] : colors->black);
       }
       frame++;
